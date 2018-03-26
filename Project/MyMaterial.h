@@ -37,7 +37,6 @@ public:
 	chai3d::cTexture2dPtr heightMap;
 	chai3d::cTexture2dPtr roughnessMap;
 
-	int binNum;
     double m_myMaterialProperty;
 };
 

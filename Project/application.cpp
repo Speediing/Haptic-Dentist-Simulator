@@ -6,6 +6,8 @@
 
 //------------------------------------------------------------------------------
 #include "chai3d.h"
+#include "MyProxyAlgorithm.h"
+#include "MyMaterial.h"
 //------------------------------------------------------------------------------
 #include <GLFW/glfw3.h>
 //------------------------------------------------------------------------------
@@ -36,28 +38,37 @@ bool mirroredDisplay = false;
 //------------------------------------------------------------------------------
 // DECLARED VARIABLES
 //------------------------------------------------------------------------------
+cVector3d debug_vect = cVector3d(0.0, 0.0, 0.0);
+cShapeSphere * sphere0;
 
 // a world that contains all objects of the virtual environment
 cWorld* world;
 
 // a camera to render the world in the window display
 cCamera* camera;
+cVector3d eye = cVector3d(0.5, 0.0, 0.0);
+cVector3d lookat = cVector3d(0.0, 0.0, 0.0);
 
 // a light source to illuminate the objects in the world
-cDirectionalLight *light;
+cSpotLight* light;
 
 // a haptic device handler
 cHapticDeviceHandler* handler;
 
 // a pointer to the current haptic device
 cGenericHapticDevicePtr hapticDevice;
-cMultiMesh* monkey;
-cTexture1d* test;
+
 // a label to display the rates [Hz] at which the simulation is running
 cLabel* labelRates;
 
 // a small sphere (cursor) representing the haptic device 
-cShapeSphere* cursor;
+cToolCursor* tool;
+
+// a pointer to the custom proxy rendering algorithm inside the tool
+MyProxyAlgorithm* proxyAlgorithm;
+
+// nine objects with different surface textures that we want to render
+cMultiMesh *objects[3][3];
 
 // flag to indicate if the haptic simulation currently running
 bool simulationRunning = false;
@@ -225,12 +236,12 @@ int main(int argc, char* argv[])
     world->addChild(camera);
 
     // position and orient the camera
-    camera->set( cVector3d (0.5, 0.0, 0.0),    // camera position (eye)
-                 cVector3d (0.0, 0.0, 0.0),    // look at position (target)
+    camera->set( eye					,    // camera position (eye)
+                 lookat					,    // look at position (target)
                  cVector3d (0.0, 0.0, 1.0));   // direction of the (up) vector
 
     // set the near and far clipping planes of the camera
-    camera->setClippingPlanes(0.01, 10.0);
+    camera->setClippingPlanes(0.01, 1.0);
 
     // set stereo mode
     camera->setStereoMode(stereoMode);
@@ -243,7 +254,7 @@ int main(int argc, char* argv[])
     camera->setMirrorVertical(mirroredDisplay);
 
     // create a directional light source
-    light = new cDirectionalLight(world);
+    light = new cSpotLight(world);
 
     // insert light source inside world
     world->addChild(light);
@@ -251,33 +262,103 @@ int main(int argc, char* argv[])
     // enable light source
     light->setEnabled(true);
 
-    // define direction of light beam
-    light->setDir(-1.0, 0.0, 0.0); 
+    // position the light source
+    light->setLocalPos(0.7, 0.3, 1.0);
 
-    // create a sphere (cursor) to represent the haptic device
-    cursor = new cShapeSphere(0.01);
+    // define the direction of the light beam
+    light->setDir(-0.5,-0.2,-0.8);
 
-    // insert cursor inside world
-    world->addChild(cursor);
+    // enable this light source to generate shadows
+    light->setShadowMapEnabled(true);
 
-	monkey = new cMultiMesh();
-	monkey->loadFromFile("simpleteeth.obj");
-	world->addChild(monkey);
-	bool fileload;
-	monkey->m_texture = cTexture2d::create();
-	fileload = monkey->m_texture->loadFromFile(("uv_teeth_color.jpg"));
-	if (!fileload)
-	{
-		#if defined(_MSVC)
-		fileload = monkey->m_texture->loadFromFile("uv_teeth_color.jpg");
-		#endif
-	}
-	if (!fileload)
-	{
-		cout << "Error - Texture image failed to load correctly." << endl;
-		close();
-		return (-1);
-	}
+    // set the resolution of the shadow map
+    light->m_shadowMap->setQualityHigh();
+
+    // set light cone half angle
+    light->setCutOffAngleDeg(10);
+
+    // use a point avatar for this scene
+    double toolRadius = 0.0;
+
+    //--------------------------------------------------------------------------
+    // [CPSC.86] TEXTURED OBJECTS
+    //--------------------------------------------------------------------------
+
+	//How to load all the maps
+	cImagePtr image = cImage::create();
+	image->loadFromFile("images/unknown.png");
+	//Has these funcitons
+	//image->getPixelColorInterpolated()
+
+
+    const double objectSpacing = 0.09;
+
+
+	
+	const std::string textureFile = "uv_teeth";
+
+	cMultiMesh* object = new cMultiMesh();
+
+	// load geometry from file and compute additional properties
+	object->loadFromFile("data/simpleteeth.obj");
+	object->createAABBCollisionDetector(toolRadius);
+	object->computeBTN();
+
+	//object->setWireMode(true);
+
+	// obtain the first (and only) mesh from the object
+	cMesh* mesh = object->getMesh(0);
+	// replace the object's material with a custom one
+	mesh->m_material = MyMaterial::create();
+	mesh->m_material->setWhite();
+	mesh->m_material->setUseHapticShading(true);
+	//MyMaterialPtr m = mesh->m_material;
+	MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(mesh->m_material);
+	object->setStiffness(2000.0, true);
+
+	cTexture2dPtr albedoMap = cTexture2d::create();
+		// create a colour texture map for this mesh object
+
+	albedoMap->loadFromFile("data/" + textureFile + "_colour.jpg");
+	albedoMap->setWrapModeS(GL_REPEAT);
+	albedoMap->setWrapModeT(GL_REPEAT);
+	albedoMap->setUseMipmaps(true);
+
+	cTexture2dPtr normalMap = cTexture2d::create();
+	normalMap->loadFromFile("data/" + textureFile + "_bump.jpg");
+	normalMap->setWrapModeS(GL_REPEAT);
+	normalMap->setWrapModeT(GL_REPEAT);
+	normalMap->setUseMipmaps(true);
+
+	/*cTexture2dPtr heightMap = cTexture2d::create();
+	heightMap->loadFromFile("images/" + textureFiles[i][j] + "_height.jpg");
+	heightMap->setWrapModeS(GL_REPEAT);
+	heightMap->setWrapModeT(GL_REPEAT);
+	heightMap->setUseMipmaps(true);
+
+	cTexture2dPtr roughMap = cTexture2d::create();
+	roughMap->loadFromFile("images/" + textureFiles[i][j] + "_roughness.jpg");
+	roughMap->setWrapModeS(GL_REPEAT);
+	roughMap->setWrapModeT(GL_REPEAT);
+	roughMap->setUseMipmaps(true);*/
+
+	material->normalMap = normalMap;
+	//material->heightMap = heightMap;
+	//material->roughnessMap = roughMap;
+
+
+	// assign textures to the mesh
+	mesh->m_texture = albedoMap;
+	mesh->setUseTexture(true);
+			
+
+	// set the position of this object
+	object->setLocalPos(0.0, 0.0);
+
+	world->addChild(object);
+    
+   
+
     //--------------------------------------------------------------------------
     // HAPTIC DEVICE
     //--------------------------------------------------------------------------
@@ -288,27 +369,29 @@ int main(int argc, char* argv[])
     // get a handle to the first haptic device
     handler->getDevice(hapticDevice, 0);
 
-    // open a connection to haptic device
-    hapticDevice->open();
-
-    // calibrate device (if necessary)
-    hapticDevice->calibrate();
-
-    // retrieve information about the current haptic device
-    cHapticDeviceInfo info = hapticDevice->getSpecifications();
-
-    // display a reference frame if haptic device supports orientations
-    if (info.m_sensedRotation == true)
-    {
-        // display reference frame
-        cursor->setShowFrame(true);
-
-        // set the size of the reference frame
-        cursor->setFrameSize(0.05);
-    }
-
     // if the device has a gripper, enable the gripper to simulate a user switch
     hapticDevice->setEnableGripperUserSwitch(true);
+
+    tool = new cToolCursor(world);
+    world->addChild(tool);
+
+	//Move to bumps bin
+	//tool->setLocalPos(0.0, -objectSpacing, 0.0);
+
+    // [CPSC.86] replace the tool's proxy rendering algorithm with our own
+    proxyAlgorithm = new MyProxyAlgorithm;
+    delete tool->m_hapticPoint->m_algorithmFingerProxy;
+    tool->m_hapticPoint->m_algorithmFingerProxy = proxyAlgorithm;
+
+    tool->m_hapticPoint->m_sphereProxy->m_material->setWhite();
+
+    tool->setRadius(0.001, toolRadius);
+
+    tool->setHapticDevice(hapticDevice);
+
+    tool->setWaitForSmallForce(true);
+
+    tool->start();
 
 
     //--------------------------------------------------------------------------
@@ -468,13 +551,15 @@ void updateGraphics(void)
     // UPDATE WIDGETS
     /////////////////////////////////////////////////////////////////////
 
+	//std::string debugString = cStr(proxyAlgorithm->m_debugInteger) + " " + debug_vect.str();
+	std::string debugString = cStr(proxyAlgorithm->m_debugInteger) + " " + proxyAlgorithm->m_debugVector.str();
+
     // update haptic and graphic rate data
     labelRates->setText(cStr(freqCounterGraphics.getFrequency(), 0) + " Hz / " +
-        cStr(freqCounterHaptics.getFrequency(), 0) + " Hz");
+        cStr(freqCounterHaptics.getFrequency(), 0) + " Hz " + debugString);
 
     // update position of label
     labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
-
 
     /////////////////////////////////////////////////////////////////////
     // RENDER SCENE
@@ -496,6 +581,42 @@ void updateGraphics(void)
 }
 
 //------------------------------------------------------------------------------
+
+bool checkMovement(cVector3d position) {
+	bool ret = false;
+	//Sphere
+	double R = 0.02;
+	
+	cVector3d sphereOffset(0.0, 0.0, 0.0);
+	cVector3d pNew = cVector3d(position.x(), position.y(), 0.0);
+	cVector3d c = pNew - sphereOffset;
+
+	if (c.length() > R && proxyAlgorithm->m_debugInteger == 0) {
+		double factor = (c.length() - R)/R;
+		double x = pNew.x() * 0.005 * factor;
+		double y = pNew.y() * 0.005 * factor;
+
+		debug_vect.set(x, y, 0.0);
+
+		eye.set(eye.x() + x, eye.y() + y, eye.z());
+		lookat.set(lookat.x() + x, lookat.y() + y, lookat.z());
+		cVector3d tPos = tool->getLocalPos();
+		tool->setLocalPos(tPos.x() + x, tPos.y() + y, tPos.z());
+
+		camera->set(eye						,   // camera position (eye)
+					lookat					,   // look at position (target)
+					cVector3d(0.0, 0.0, 1.0)	// direction of the (up) vector
+					);   
+
+		ret = true;
+	}
+	else {
+		ret = false;
+	}
+
+	return ret;
+}
+
 
 void updateHaptics(void)
 {
@@ -523,29 +644,35 @@ void updateHaptics(void)
         hapticDevice->getUserSwitch(0, button);
 
 
+        world->computeGlobalPositions();
+
+
         /////////////////////////////////////////////////////////////////////
         // UPDATE 3D CURSOR MODEL
         /////////////////////////////////////////////////////////////////////
 
-        // update position and orienation of cursor
-        cursor->setLocalPos(position);
-        cursor->setLocalRot(rotation);
+        tool->updateFromDevice();
+
 
         /////////////////////////////////////////////////////////////////////
         // COMPUTE FORCES
         /////////////////////////////////////////////////////////////////////
 
+        tool->computeInteractionForces();
+
         cVector3d force(0, 0, 0);
         cVector3d torque(0, 0, 0);
         double gripperForce = 0.0;
 
+		bool flag = checkMovement(position);
+		if (flag) {
 
+		}
         /////////////////////////////////////////////////////////////////////
         // APPLY FORCES
         /////////////////////////////////////////////////////////////////////
 
-        // send computed force, torque, and gripper force to haptic device
-        hapticDevice->setForceAndTorqueAndGripperForce(force, torque, gripperForce);
+        tool->applyToDevice();
 
         // signal frequency counter
         freqCounterHaptics.signal(1);
