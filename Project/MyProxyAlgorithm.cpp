@@ -71,14 +71,39 @@ void MyProxyAlgorithm::updateForce()
 		int triIndex = c0->m_index;
 		int vertexIndex0 = c0->m_triangles->getVertexIndex0(c0->m_index);
 		
-		
 
 		if (MyMaterialPtr material = std::dynamic_pointer_cast<MyMaterial>(c0->m_object->m_material))
 		{
+			cVector3d collisionGlobPos = c0->m_object->getGlobalPos();
 
+			cVector3d collisionLocalPos = c0->m_localPos;
+			cVector3d tCoordRemapped = c0->m_triangles->getTexCoordAtPosition(triIndex, collisionLocalPos);
+			//Every other bin
+			if (true) {
+				//cout << "In Other!" << endl;
+				cVector3d normalMapVect;
+				cColorf normalMapColour;
+				cImagePtr normalImg;
+
+				normalImg = material->normalMap->m_image;
+
+				normalImg->getPixelColorInterpolated(tCoordRemapped.x() * normalImg->getWidth(), tCoordRemapped.y() * normalImg->getHeight(), normalMapColour);
+				normalMapVect.set(normalMapColour.getG() - 0.5, normalMapColour.getR() - 0.5, normalMapColour.getB() - 0.5);
+
+				//cVector3d n = c0->m_localNormal + normalMapVect;
+				cVector3d n = computeShadedSurfaceNormal(c0) + normalMapVect;
+				//n.normalize();
+				//cout << m_debugVector.x() << endl;
+				n = (cNormalize(m_normalForce) + n) / 2.0;
+
+
+				//* (1 + heightVect.length())
+				force = m_lastGlobalForce.length() * (n);
+				m_debugInteger = force.length();
+			}
 
 		}
-
+		m_debugVector = force;
 		m_lastGlobalForce = force;
 		//This will force the haptic device to the right.
 		//m_lastGlobalForce = cVector3d(0.0, 3.0, 0.0);

@@ -241,7 +241,7 @@ int main(int argc, char* argv[])
                  cVector3d (0.0, 0.0, 1.0));   // direction of the (up) vector
 
     // set the near and far clipping planes of the camera
-    camera->setClippingPlanes(0.01, 1.0);
+    camera->setClippingPlanes(0.01, 10.0);
 
     // set stereo mode
     camera->setStereoMode(stereoMode);
@@ -275,7 +275,7 @@ int main(int argc, char* argv[])
     light->m_shadowMap->setQualityHigh();
 
     // set light cone half angle
-    light->setCutOffAngleDeg(10);
+    light->setCutOffAngleDeg(180);
 
     // use a point avatar for this scene
     double toolRadius = 0.0;
@@ -300,7 +300,8 @@ int main(int argc, char* argv[])
 	cMultiMesh* object = new cMultiMesh();
 
 	// load geometry from file and compute additional properties
-	object->loadFromFile("data/simpleteeth.obj");
+	//object->loadFromFile("data/simpleteeth.obj");
+	object->loadFromFile("data/teeth.3ds");
 	object->createAABBCollisionDetector(toolRadius);
 	object->computeBTN();
 
@@ -316,16 +317,17 @@ int main(int argc, char* argv[])
 	MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(mesh->m_material);
 	object->setStiffness(2000.0, true);
 
+	/*
 	cTexture2dPtr albedoMap = cTexture2d::create();
 		// create a colour texture map for this mesh object
 
-	albedoMap->loadFromFile("data/" + textureFile + "_colour.jpg");
+	albedoMap->loadFromFile("data/" + textureFile + "_color.jpg");
 	albedoMap->setWrapModeS(GL_REPEAT);
 	albedoMap->setWrapModeT(GL_REPEAT);
-	albedoMap->setUseMipmaps(true);
+	albedoMap->setUseMipmaps(true);*/
 
 	cTexture2dPtr normalMap = cTexture2d::create();
-	normalMap->loadFromFile("data/" + textureFile + "_bump.jpg");
+	normalMap->loadFromFile("data/bumppy.png");
 	normalMap->setWrapModeS(GL_REPEAT);
 	normalMap->setWrapModeT(GL_REPEAT);
 	normalMap->setUseMipmaps(true);
@@ -348,8 +350,9 @@ int main(int argc, char* argv[])
 
 
 	// assign textures to the mesh
-	mesh->m_texture = albedoMap;
-	mesh->setUseTexture(true);
+	
+	//mesh->m_texture = albedoMap;
+	//mesh->setUseTexture(true);
 			
 
 	// set the position of this object
@@ -588,20 +591,20 @@ bool checkMovement(cVector3d position) {
 	double R = 0.02;
 	
 	cVector3d sphereOffset(0.0, 0.0, 0.0);
-	cVector3d pNew = cVector3d(position.x(), position.y(), 0.0);
+	cVector3d pNew = cVector3d(position.x(), position.y(), position.z());
 	cVector3d c = pNew - sphereOffset;
 
 	if (c.length() > R && proxyAlgorithm->m_debugInteger == 0) {
 		double factor = (c.length() - R)/R;
 		double x = pNew.x() * 0.005 * factor;
 		double y = pNew.y() * 0.005 * factor;
-
+		double z = pNew.z() * 0.005 * factor;
 		debug_vect.set(x, y, 0.0);
 
-		eye.set(eye.x() + x, eye.y() + y, eye.z());
-		lookat.set(lookat.x() + x, lookat.y() + y, lookat.z());
+		eye.set(eye.x() + x, eye.y() + y, eye.z() + z);
+		lookat.set(lookat.x() + x, lookat.y() + y, lookat.z() + z);
 		cVector3d tPos = tool->getLocalPos();
-		tool->setLocalPos(tPos.x() + x, tPos.y() + y, tPos.z());
+		tool->setLocalPos(tPos.x() + x, tPos.y() + y, tPos.z() + z);
 
 		camera->set(eye						,   // camera position (eye)
 					lookat					,   // look at position (target)
