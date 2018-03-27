@@ -70,14 +70,28 @@ void MyProxyAlgorithm::updateForce()
 		//m_debugVector = c0->m_globalNormal;
 		int triIndex = c0->m_index;
 		int vertexIndex0 = c0->m_triangles->getVertexIndex0(c0->m_index);
-		
 
 		if (MyMaterialPtr material = std::dynamic_pointer_cast<MyMaterial>(c0->m_object->m_material))
 		{
+			int a_x, a_y;
+			
 			cVector3d collisionGlobPos = c0->m_object->getGlobalPos();
 
 			cVector3d collisionLocalPos = c0->m_localPos;
 			cVector3d tCoordRemapped = c0->m_triangles->getTexCoordAtPosition(triIndex, collisionLocalPos);
+			c0->m_object->m_texture->m_image->getPixelLocation(tCoordRemapped, a_x, a_y);
+			cout << a_x << " " << a_y << endl;
+			unsigned char r = 255;
+			unsigned char g = 255;
+			unsigned char b = 255;
+			for (int x = 0; x < 1; x++) {
+				for (int y = 0; y < 1; y++) {
+					cColorb col;
+					col.set(r, g, b);
+					c0->m_object->m_texture->m_image->setPixelColor(a_x+x, a_y+y, col);
+					c0->m_object->m_texture->markForUpdate();
+				}
+			}
 			//Every other bin
 			if (true) {
 				//cout << "In Other!" << endl;

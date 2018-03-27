@@ -311,20 +311,20 @@ int main(int argc, char* argv[])
 	cMesh* mesh = object->getMesh(0);
 	// replace the object's material with a custom one
 	mesh->m_material = MyMaterial::create();
-	mesh->m_material->setWhite();
+	//mesh->m_material->setWhite();
 	mesh->m_material->setUseHapticShading(true);
 	//MyMaterialPtr m = mesh->m_material;
 	MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(mesh->m_material);
 	object->setStiffness(2000.0, true);
 
-	/*
+	
 	cTexture2dPtr albedoMap = cTexture2d::create();
 		// create a colour texture map for this mesh object
 
-	albedoMap->loadFromFile("data/" + textureFile + "_color.jpg");
+	albedoMap->loadFromFile("data/yellow.jpg");
 	albedoMap->setWrapModeS(GL_REPEAT);
 	albedoMap->setWrapModeT(GL_REPEAT);
-	albedoMap->setUseMipmaps(true);*/
+	albedoMap->setUseMipmaps(true);
 
 	cTexture2dPtr normalMap = cTexture2d::create();
 	normalMap->loadFromFile("data/bumppy.png");
@@ -351,8 +351,8 @@ int main(int argc, char* argv[])
 
 	// assign textures to the mesh
 	
-	//mesh->m_texture = albedoMap;
-	//mesh->setUseTexture(true);
+	mesh->m_texture = albedoMap;
+	mesh->setUseTexture(true);
 			
 
 	// set the position of this object
