@@ -19,7 +19,7 @@
 #include <iostream>
 using std::cout;
 using std::endl;
-
+using namespace std;
 using namespace chai3d;
 
 //==============================================================================
@@ -70,31 +70,77 @@ void MyProxyAlgorithm::updateForce()
 		//m_debugVector = c0->m_globalNormal;
 		int triIndex = c0->m_index;
 		int vertexIndex0 = c0->m_triangles->getVertexIndex0(c0->m_index);
-
 		if (MyMaterialPtr material = std::dynamic_pointer_cast<MyMaterial>(c0->m_object->m_material))
 		{
 			int a_x, a_y;
-			
-			cVector3d collisionGlobPos = c0->m_object->getGlobalPos();
+			string object = material->obj;
+			if (object == "teeth") {
+				cVector3d collisionGlobPos = c0->m_object->getGlobalPos();
 
-			cVector3d collisionLocalPos = c0->m_localPos;
-			cVector3d tCoordRemapped = c0->m_triangles->getTexCoordAtPosition(triIndex, collisionLocalPos);
-			c0->m_object->m_texture->m_image->getPixelLocation(tCoordRemapped, a_x, a_y);
-			cout << a_x << " " << a_y << endl;
-			unsigned char r = 255;
-			unsigned char g = 255;
-			unsigned char b = 255;
-			for (int x = 0; x < 1; x++) {
-				for (int y = 0; y < 1; y++) {
-					cColorb col;
-					col.set(r, g, b);
-					c0->m_object->m_texture->m_image->setPixelColor(a_x+x, a_y+y, col);
-					c0->m_object->m_texture->markForUpdate();
-				}
+				cVector3d collisionLocalPos = c0->m_localPos;
+				cVector3d tCoordRemapped = c0->m_triangles->getTexCoordAtPosition(triIndex, collisionLocalPos);
+				c0->m_object->m_texture->m_image->getPixelLocation(tCoordRemapped, a_x, a_y);
+				
+				cColorb color, newColor;
+				c0->m_object->m_texture->m_image->getPixelColor(a_x, a_y, color);
+					cVector3d normalMapVect;
+					cColorf normalMapColour;
+					cImagePtr normalImg;
+
+					normalImg = material->normalMap->m_image;
+					normalImg->getPixelColorInterpolated(tCoordRemapped.x() * normalImg->getWidth(), tCoordRemapped.y() * normalImg->getHeight(), normalMapColour);
+					normalMapVect.set(normalMapColour.getG() - 0.5, normalMapColour.getR() - 0.5, normalMapColour.getB() - 0.5);
+
+					//cVector3d n = c0->m_localNormal + normalMapVect;
+					cVector3d n = computeShadedSurfaceNormal(c0); normalMapVect;
+					//n.normalize();
+					//cout << m_debugVector.x() << endl;
+					//n = (cNormalize(m_normalForce) + n) / 2.0;
+
+
+					//* (1 + heightVect.length())
+					force = m_lastGlobalForce.length() * (n);
+					m_debugInteger = force.length();
+					if (cDot(force, force) > 50) {
+						cout << triIndex << endl;
+						//material->mesh->removeTriangle(triIndex);
+					}
+					if (cDot(force, force) > 25) {
+						unsigned char r = 255;
+						unsigned char g = 255;
+						unsigned char b = 255;
+						for (int x = 0; x < 1; x++) {
+							for (int y = 0; y < 1; y++) {
+								cColorb col;
+								col.set(r, g, b);
+								c0->m_object->m_texture->m_image->setPixelColor(a_x + x, a_y + y, col);
+								c0->m_object->m_texture->markForUpdate();
+							}
+						}
+					}
+					if (color != cColorb(255, 255, 255))
+					{
+						material->setDynamicFriction(2);
+						material->setStaticFriction(2);
+					}
 			}
-			//Every other bin
-			if (true) {
-				//cout << "In Other!" << endl;
+			if (object == "gums") {
+				cVector3d collisionGlobPos = c0->m_object->getGlobalPos();
+
+				cVector3d collisionLocalPos = c0->m_localPos;
+				cVector3d tCoordRemapped = c0->m_triangles->getTexCoordAtPosition(triIndex, collisionLocalPos);
+				c0->m_object->m_texture->m_image->getPixelLocation(tCoordRemapped, a_x, a_y);
+				unsigned char r = 150;
+				unsigned char g = 0;
+				unsigned char b = 0;
+				for (int x = 0; x < 1; x++) {
+					for (int y = 0; y < 1; y++) {
+						cColorb col;
+						col.set(r, g, b);
+						c0->m_object->m_texture->m_image->setPixelColor(a_x + x, a_y + y, col);
+						c0->m_object->m_texture->markForUpdate();
+					}
+				}
 				cVector3d normalMapVect;
 				cColorf normalMapColour;
 				cImagePtr normalImg;

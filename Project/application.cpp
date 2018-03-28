@@ -68,6 +68,7 @@ cToolCursor* tool;
 MyProxyAlgorithm* proxyAlgorithm;
 
 // nine objects with different surface textures that we want to render
+cMultiMesh* scope;
 cMultiMesh *objects[3][3];
 
 // flag to indicate if the haptic simulation currently running
@@ -345,6 +346,7 @@ int main(int argc, char* argv[])
 	roughMap->setUseMipmaps(true);*/
 
 	material->normalMap = normalMap;
+	material->obj = "teeth";
 	//material->heightMap = heightMap;
 	//material->roughnessMap = roughMap;
 
@@ -354,13 +356,77 @@ int main(int argc, char* argv[])
 	mesh->m_texture = albedoMap;
 	mesh->setUseTexture(true);
 			
-
+	
 	// set the position of this object
 	object->setLocalPos(0.0, 0.0);
 
 	world->addChild(object);
     
-   
+	cMultiMesh* gums = new cMultiMesh();
+
+	// load geometry from file and compute additional properties
+	//object->loadFromFile("data/simpleteeth.obj");
+	gums->loadFromFile("data/gums.3ds");
+	gums->createAABBCollisionDetector(toolRadius);
+	gums->computeBTN();
+
+	//object->setWireMode(true);
+
+	// obtain the first (and only) mesh from the object
+	cMesh* gummesh = gums->getMesh(0);
+	// replace the object's material with a custom one
+	gummesh->m_material = MyMaterial::create();
+	//gummesh->m_material->setRed();
+	gummesh->m_material->setUseHapticShading(true);
+	//MyMaterialPtr m = mesh->m_material;
+	MyMaterialPtr material2 = dynamic_pointer_cast<MyMaterial>(gummesh->m_material);
+	gummesh->setStiffness(2000.0, true);
+
+
+	cTexture2dPtr albedoMap2 = cTexture2d::create();
+	// create a colour texture map for this mesh object
+
+	albedoMap2->loadFromFile("data/gumcolor.jpg");
+	albedoMap2->setWrapModeS(GL_REPEAT);
+	albedoMap2->setWrapModeT(GL_REPEAT);
+	albedoMap2->setUseMipmaps(true);
+
+	cTexture2dPtr normalMap2 = cTexture2d::create();
+	normalMap2->loadFromFile("data/bumppy.png");
+	normalMap2->setWrapModeS(GL_REPEAT);
+	normalMap2->setWrapModeT(GL_REPEAT);
+	normalMap2->setUseMipmaps(true);
+
+	/*cTexture2dPtr heightMap = cTexture2d::create();
+	heightMap->loadFromFile("images/" + textureFiles[i][j] + "_height.jpg");
+	heightMap->setWrapModeS(GL_REPEAT);
+	heightMap->setWrapModeT(GL_REPEAT);
+	heightMap->setUseMipmaps(true);
+
+	cTexture2dPtr roughMap = cTexture2d::create();
+	roughMap->loadFromFile("images/" + textureFiles[i][j] + "_roughness.jpg");
+	roughMap->setWrapModeS(GL_REPEAT);
+	roughMap->setWrapModeT(GL_REPEAT);
+	roughMap->setUseMipmaps(true);*/
+
+	material2->normalMap = normalMap2;
+	material2->obj = "gums";
+	material2->mesh = gummesh;
+	//material->heightMap = heightMap;
+	//material->roughnessMap = roughMap;
+
+
+	// assign textures to the mesh
+
+	gummesh->m_texture = albedoMap2;
+	gummesh->setUseTexture(true);
+
+
+	// set the position of this object
+	gums->setLocalPos(0.0, 0.0);
+
+	world->addChild(gums);
+
 
     //--------------------------------------------------------------------------
     // HAPTIC DEVICE
@@ -388,15 +454,26 @@ int main(int argc, char* argv[])
 
     tool->m_hapticPoint->m_sphereProxy->m_material->setWhite();
 
-    tool->setRadius(0.001, toolRadius);
+    tool->setRadius(0.01, toolRadius);
 
     tool->setHapticDevice(hapticDevice);
 
     tool->setWaitForSmallForce(true);
+	scope = new cMultiMesh();
 
-    tool->start();
+	// attach scope to tool
+	tool->m_image = scope;
+	// load an object file
+	scope->loadFromFile("data/toothbrush.3ds");
+	tool->setShowContactPoints(false, false);
+	scope->rotateExtrinsicEulerAnglesDeg(M_PI, M_PI, M_PI, C_EULER_ORDER_XYZ);
+	scope->setUseCulling(false);
+	scope->createAABBCollisionDetector(toolRadius);
+	tool->updateToolImagePosition();
 
-
+	// use display list for faster rendering
+	scope->setUseDisplayList(true);
+	tool->start();
     //--------------------------------------------------------------------------
     // WIDGETS
     //--------------------------------------------------------------------------

@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 struct MyMaterial;
 typedef std::shared_ptr<MyMaterial> MyMaterialPtr;
+using namespace std;
 //------------------------------------------------------------------------------
 
 struct MyMaterial : public chai3d::cMaterial
@@ -29,7 +30,7 @@ public:
     //! Shared MyMaterial allocator.
     static MyMaterialPtr create() { return (std::make_shared<MyMaterial>()); }
 
-
+	chai3d::cMesh* mesh;
     //--------------------------------------------------------------------------
     // [CPSC.86] CUSTOM MATERIAL PROPERTIES
     //--------------------------------------------------------------------------
@@ -38,6 +39,7 @@ public:
 	chai3d::cTexture2dPtr roughnessMap;
 
     double m_myMaterialProperty;
+	string obj;
 };
 
 //------------------------------------------------------------------------------
