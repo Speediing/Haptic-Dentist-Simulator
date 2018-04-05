@@ -60,6 +60,8 @@ cGenericHapticDevicePtr hapticDevice;
 
 // a label to display the rates [Hz] at which the simulation is running
 cLabel* labelRates;
+cLabel* timeLabel;
+cPrecisionClock* timer;
 
 // a small sphere (cursor) representing the haptic device 
 cToolCursor* tool;
@@ -70,6 +72,8 @@ MyProxyAlgorithm* proxyAlgorithm;
 // nine objects with different surface textures that we want to render
 cMultiMesh* scope;
 cMultiMesh *objects[3][3];
+cMesh* mesh;
+cMesh* gummesh;
 
 // flag to indicate if the haptic simulation currently running
 bool simulationRunning = false;
@@ -230,7 +234,7 @@ int main(int argc, char* argv[])
     world = new cWorld();
 
     // set the background color of the environment
-    world->m_backgroundColor.setBlack();
+	world->m_backgroundColor.setBlueDarkTurquoise();
 
     // create a camera and insert it into the virtual world
     camera = new cCamera(world);
@@ -279,8 +283,7 @@ int main(int argc, char* argv[])
     light->setCutOffAngleDeg(180);
 
     // use a point avatar for this scene
-    double toolRadius = 0.0;
-
+    double toolRadius = 0.01;
     //--------------------------------------------------------------------------
     // [CPSC.86] TEXTURED OBJECTS
     //--------------------------------------------------------------------------
@@ -302,14 +305,14 @@ int main(int argc, char* argv[])
 
 	// load geometry from file and compute additional properties
 	//object->loadFromFile("data/simpleteeth.obj");
-	object->loadFromFile("data/teeth.3ds");
+	object->loadFromFile("data/teethmagic.obj");
 	object->createAABBCollisionDetector(toolRadius);
 	object->computeBTN();
 
 	//object->setWireMode(true);
 
 	// obtain the first (and only) mesh from the object
-	cMesh* mesh = object->getMesh(0);
+	mesh = object->getMesh(0);
 	// replace the object's material with a custom one
 	mesh->m_material = MyMaterial::create();
 	//mesh->m_material->setWhite();
@@ -373,7 +376,7 @@ int main(int argc, char* argv[])
 	//object->setWireMode(true);
 
 	// obtain the first (and only) mesh from the object
-	cMesh* gummesh = gums->getMesh(0);
+	gummesh = gums->getMesh(0);
 	// replace the object's material with a custom one
 	gummesh->m_material = MyMaterial::create();
 	//gummesh->m_material->setRed();
@@ -463,9 +466,10 @@ int main(int argc, char* argv[])
 
 	// attach scope to tool
 	tool->m_image = scope;
+	tool->m_image->setLocalPos(cVector3d(tool->getLocalPos().x(), tool->getLocalPos().y() - 1, tool->getLocalPos().z()-.07));
 	// load an object file
 	scope->loadFromFile("data/toothbrush.3ds");
-	tool->setShowContactPoints(false, false);
+	//tool->setShowContactPoints(false, false);
 	scope->rotateExtrinsicEulerAnglesDeg(M_PI, M_PI, M_PI, C_EULER_ORDER_XYZ);
 	scope->setUseCulling(false);
 	scope->createAABBCollisionDetector(toolRadius);
@@ -485,8 +489,11 @@ int main(int argc, char* argv[])
     labelRates = new cLabel(font);
     labelRates->m_fontColor.setWhite();
     camera->m_frontLayer->addChild(labelRates);
-
-
+	timeLabel = new cLabel(font);
+	timeLabel->m_fontColor.setWhite();
+	camera->m_frontLayer->addChild(timeLabel);
+	timer = new cPrecisionClock();
+	timer->start();
     //--------------------------------------------------------------------------
     // START SIMULATION
     //--------------------------------------------------------------------------
@@ -637,10 +644,12 @@ void updateGraphics(void)
     // update haptic and graphic rate data
     labelRates->setText(cStr(freqCounterGraphics.getFrequency(), 0) + " Hz / " +
         cStr(freqCounterHaptics.getFrequency(), 0) + " Hz " + debugString);
+	timeLabel->setText(cStr(60 - timer->getCurrentTimeSeconds()) + " " + cStr(dynamic_pointer_cast<MyMaterial>(mesh->m_material)->points));
+
 
     // update position of label
     labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
-
+	timeLabel->setLocalPos((int)(0.5 * (width - timeLabel->getWidth())), 550);
     /////////////////////////////////////////////////////////////////////
     // RENDER SCENE
     /////////////////////////////////////////////////////////////////////
@@ -703,14 +712,14 @@ void updateHaptics(void)
     // simulation in now running
     simulationRunning  = true;
     simulationFinished = false;
-
     // main haptic simulation loop
     while(simulationRunning)
     {
         /////////////////////////////////////////////////////////////////////
         // READ HAPTIC DEVICE
         /////////////////////////////////////////////////////////////////////
-
+		tool->m_image->setLocalPos(cVector3d(tool->getLocalPos().x(), tool->getLocalPos().y() - 1, tool->getLocalPos().z() - .07));
+		tool->updateToolImagePosition();
         // read position 
         cVector3d position;
         hapticDevice->getPosition(position);

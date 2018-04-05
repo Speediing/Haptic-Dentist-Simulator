@@ -92,7 +92,7 @@ void MyProxyAlgorithm::updateForce()
 					normalMapVect.set(normalMapColour.getG() - 0.5, normalMapColour.getR() - 0.5, normalMapColour.getB() - 0.5);
 
 					//cVector3d n = c0->m_localNormal + normalMapVect;
-					cVector3d n = computeShadedSurfaceNormal(c0); normalMapVect;
+					cVector3d n = computeShadedSurfaceNormal(c0); //normalMapVect;
 					//n.normalize();
 					//cout << m_debugVector.x() << endl;
 					//n = (cNormalize(m_normalForce) + n) / 2.0;
@@ -115,6 +115,7 @@ void MyProxyAlgorithm::updateForce()
 								col.set(r, g, b);
 								c0->m_object->m_texture->m_image->setPixelColor(a_x + x, a_y + y, col);
 								c0->m_object->m_texture->markForUpdate();
+								material->points++;
 							}
 						}
 					}
@@ -139,6 +140,7 @@ void MyProxyAlgorithm::updateForce()
 						col.set(r, g, b);
 						c0->m_object->m_texture->m_image->setPixelColor(a_x + x, a_y + y, col);
 						c0->m_object->m_texture->markForUpdate();
+						material->points++;
 					}
 				}
 				cVector3d normalMapVect;
@@ -151,7 +153,7 @@ void MyProxyAlgorithm::updateForce()
 				normalMapVect.set(normalMapColour.getG() - 0.5, normalMapColour.getR() - 0.5, normalMapColour.getB() - 0.5);
 
 				//cVector3d n = c0->m_localNormal + normalMapVect;
-				cVector3d n = computeShadedSurfaceNormal(c0) + normalMapVect;
+				cVector3d n = computeShadedSurfaceNormal(c0);// + normalMapVect;
 				//n.normalize();
 				//cout << m_debugVector.x() << endl;
 				n = (cNormalize(m_normalForce) + n) / 2.0;
