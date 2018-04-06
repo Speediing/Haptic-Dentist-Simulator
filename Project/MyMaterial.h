@@ -40,7 +40,7 @@ public:
 
     double m_myMaterialProperty;
 	string obj;
-	int points;
+	int points = 0;
 };
 
 //------------------------------------------------------------------------------

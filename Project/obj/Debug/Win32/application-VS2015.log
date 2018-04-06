@@ -1,0 +1,15 @@
+﻿  application.cpp
+  MyMaterial.cpp
+  MyProxyAlgorithm.cpp
+u:\maybe\cpsc599projdentist\project\MyMaterial.h(41): error C3646: 'obj': unknown override specifier (compiling source file MyMaterial.cpp)
+u:\maybe\cpsc599projdentist\project\MyMaterial.h(41): error C3646: 'obj': unknown override specifier (compiling source file MyProxyAlgorithm.cpp)
+u:\maybe\cpsc599projdentist\project\MyMaterial.h(41): error C3646: 'obj': unknown override specifier (compiling source file application.cpp)
+u:\maybe\cpsc599projdentist\project\MyMaterial.h(41): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int (compiling source file MyMaterial.cpp)
+u:\maybe\cpsc599projdentist\project\MyMaterial.h(41): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int (compiling source file MyProxyAlgorithm.cpp)
+u:\maybe\cpsc599projdentist\project\MyMaterial.h(41): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int (compiling source file application.cpp)
+MyProxyAlgorithm.cpp(76): error C2039: 'obj': is not a member of 'MyMaterial'
+  u:\maybe\cpsc599projdentist\project\MyMaterial.h(22): note: see declaration of 'MyMaterial'
+application.cpp(348): error C2039: 'obj': is not a member of 'MyMaterial'
+  u:\maybe\cpsc599projdentist\project\MyMaterial.h(22): note: see declaration of 'MyMaterial'
+application.cpp(412): error C2039: 'obj': is not a member of 'MyMaterial'
+  u:\maybe\cpsc599projdentist\project\MyMaterial.h(22): note: see declaration of 'MyMaterial'

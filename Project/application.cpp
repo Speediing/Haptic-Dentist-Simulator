@@ -75,6 +75,7 @@ cMultiMesh *objects[32];
 cMesh* yes[32];
 cMesh* gummesh;
 cMesh* topgums;
+cMesh* bottomgums;
 
 // flag to indicate if the haptic simulation currently running
 bool simulationRunning = false;
@@ -301,7 +302,8 @@ int main(int argc, char* argv[])
 
 	
 	const std::string textureFile = "uv_teeth";
-	for (int i = 0; i < 32; i++) {
+
+	for (int i = 0; i < 35; i++) {
 		cMultiMesh* object = new cMultiMesh();
 
 		object->loadFromFile("data/"+cStr(i+1)+".obj");
@@ -310,15 +312,15 @@ int main(int argc, char* argv[])
 		yes[i] = object->getMesh(0);
 		yes[i]->m_material = MyMaterial::create();
 		yes[i]->m_material->setUseHapticShading(true);
-		MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(yes[0]->m_material);
-		object->setStiffness(2000.0, true);
+		MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(yes[i]->m_material);
+		object->setStiffness(500.0, true);
 		cTexture2dPtr albedoMap = cTexture2d::create();
-		albedoMap->loadFromFile("data/yellow.jpg");
+		albedoMap->loadFromFile("data/sandpaper_colour.jpg");
 		albedoMap->setWrapModeS(GL_REPEAT);
 		albedoMap->setWrapModeT(GL_REPEAT);
 		albedoMap->setUseMipmaps(true);
 		cTexture2dPtr normalMap = cTexture2d::create();
-		normalMap->loadFromFile("data/bumppy.png");
+		normalMap->loadFromFile("data/SandPaperNormalMap.png");
 		normalMap->setWrapModeS(GL_REPEAT);
 		normalMap->setWrapModeT(GL_REPEAT);
 		normalMap->setUseMipmaps(true);
@@ -421,7 +423,32 @@ int main(int argc, char* argv[])
 	gums2->setLocalPos(0.0, 0.0);
 
 	world->addChild(gums2);
-	gums2->rotateExtrinsicEulerAnglesDeg(M_PI / 2, 0, 0, C_EULER_ORDER_XYZ);
+	cMultiMesh* gums3 = new cMultiMesh();
+
+	// load geometry from file and compute additional properties
+	//object->loadFromFile("data/simpleteeth.obj");
+	gums3->loadFromFile("data/36.obj");
+	gums3->createAABBCollisionDetector(toolRadius);
+	gums3->computeBTN();
+
+	//object->setWireMode(true);
+
+	// obtain the first (and only) mesh from the object
+	bottomgums = gums3->getMesh(0);
+	// replace the object's material with a custom one
+	bottomgums->m_material = MyMaterial::create();
+	bottomgums->m_material->setGreen();
+	bottomgums->m_material->setUseHapticShading(true);
+	//MyMaterialPtr m = mesh->m_material;
+	MyMaterialPtr material3 = dynamic_pointer_cast<MyMaterial>(bottomgums->m_material);
+	bottomgums->setStiffness(2000.0, true);
+
+	material3->obj = "gums";
+	material3->mesh = bottomgums;
+	gums3->setLocalPos(0.0, 0.0);
+
+	//world->addChild(gums3);
+	//gums3->rotateExtrinsicEulerAnglesDeg(M_PI / 2, 0, 0, C_EULER_ORDER_XYZ);
 
 
     //--------------------------------------------------------------------------
@@ -458,18 +485,18 @@ int main(int argc, char* argv[])
 	scope = new cMultiMesh();
 
 	// attach scope to tool
-	tool->m_image = scope;
-	tool->m_image->setLocalPos(cVector3d(tool->getLocalPos().x(), tool->getLocalPos().y() - 1, tool->getLocalPos().z()-.07));
+	tool->m_image->addChild(scope);
 	// load an object file
 	scope->loadFromFile("data/toothbrush.3ds");
 	//tool->setShowContactPoints(false, false);
 	scope->rotateExtrinsicEulerAnglesDeg(M_PI, M_PI, M_PI, C_EULER_ORDER_XYZ);
 	scope->setUseCulling(false);
 	scope->createAABBCollisionDetector(toolRadius);
-	tool->updateToolImagePosition();
+	//tool->updateToolImagePosition();
 
 	// use display list for faster rendering
 	scope->setUseDisplayList(true);
+	scope->setLocalPos(0.0, 0.1, 0.0);
 	tool->start();
     //--------------------------------------------------------------------------
     // WIDGETS
@@ -637,12 +664,13 @@ void updateGraphics(void)
     // update haptic and graphic rate data
     labelRates->setText(cStr(freqCounterGraphics.getFrequency(), 0) + " Hz / " +
         cStr(freqCounterHaptics.getFrequency(), 0) + " Hz " + debugString);
-	timeLabel->setText(cStr(60 - timer->getCurrentTimeSeconds()) + " " + cStr(dynamic_pointer_cast<MyMaterial>(yes[0]->m_material)->points));
+	int point = dynamic_pointer_cast<MyMaterial>(yes[0]->m_material)->points - dynamic_pointer_cast<MyMaterial>(gummesh->m_material)->points;
+	timeLabel->setText(cStr(60 - timer->getCurrentTimeSeconds()) + " " + cStr(point));
 
 
     // update position of label
     labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
-	timeLabel->setLocalPos((int)(0.5 * (width - timeLabel->getWidth())), 550);
+	timeLabel->setLocalPos((int)(0.5 * (width - timeLabel->getWidth())), 50);
     /////////////////////////////////////////////////////////////////////
     // RENDER SCENE
     /////////////////////////////////////////////////////////////////////
@@ -669,7 +697,7 @@ bool checkMovement(cVector3d position) {
 	//Sphere
 	double R = 0.02;
 	
-	cVector3d sphereOffset(0.0, 0.0, 0.0);
+	cVector3d sphereOffset(0.01, 0.0, 0.0);
 	cVector3d pNew = cVector3d(position.x(), position.y(), position.z());
 	cVector3d c = pNew - sphereOffset;
 
@@ -711,8 +739,8 @@ void updateHaptics(void)
         /////////////////////////////////////////////////////////////////////
         // READ HAPTIC DEVICE
         /////////////////////////////////////////////////////////////////////
-		tool->m_image->setLocalPos(cVector3d(tool->getLocalPos().x(), tool->getLocalPos().y() - 1, tool->getLocalPos().z() - .07));
-		tool->updateToolImagePosition();
+		//tool->m_image->setLocalPos(cVector3d(tool->getLocalPos().x(), tool->getLocalPos().y(), tool->getLocalPos().z()));
+		//tool->updateToolImagePosition();
         // read position 
         cVector3d position;
         hapticDevice->getPosition(position);
