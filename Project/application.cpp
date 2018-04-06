@@ -325,13 +325,13 @@ int main(int argc, char* argv[])
 	cTexture2dPtr albedoMap = cTexture2d::create();
 		// create a colour texture map for this mesh object
 
-	albedoMap->loadFromFile("data/yellow.jpg");
+	albedoMap->loadFromFile("data/sandpaper_colour.jpg");
 	albedoMap->setWrapModeS(GL_REPEAT);
 	albedoMap->setWrapModeT(GL_REPEAT);
 	albedoMap->setUseMipmaps(true);
 
 	cTexture2dPtr normalMap = cTexture2d::create();
-	normalMap->loadFromFile("data/bumppy.png");
+	normalMap->loadFromFile("data/SandPaperNormalMap.png");
 	normalMap->setWrapModeS(GL_REPEAT);
 	normalMap->setWrapModeT(GL_REPEAT);
 	normalMap->setUseMipmaps(true);
@@ -644,12 +644,12 @@ void updateGraphics(void)
     // update haptic and graphic rate data
     labelRates->setText(cStr(freqCounterGraphics.getFrequency(), 0) + " Hz / " +
         cStr(freqCounterHaptics.getFrequency(), 0) + " Hz " + debugString);
-	timeLabel->setText(cStr(60 - timer->getCurrentTimeSeconds()) + " " + cStr(dynamic_pointer_cast<MyMaterial>(mesh->m_material)->points));
-
+	int point = dynamic_pointer_cast<MyMaterial>(mesh->m_material)->points - dynamic_pointer_cast<MyMaterial>(gummesh->m_material)->points;
+	timeLabel->setText(cStr(60 - timer->getCurrentTimeSeconds()) + " " + cStr(point));
 
     // update position of label
     labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
-	timeLabel->setLocalPos((int)(0.5 * (width - timeLabel->getWidth())), 550);
+	timeLabel->setLocalPos((int)(0.5 * (width - timeLabel->getWidth())), 50);
     /////////////////////////////////////////////////////////////////////
     // RENDER SCENE
     /////////////////////////////////////////////////////////////////////
@@ -676,7 +676,7 @@ bool checkMovement(cVector3d position) {
 	//Sphere
 	double R = 0.02;
 	
-	cVector3d sphereOffset(0.0, 0.0, 0.0);
+	cVector3d sphereOffset(0.01, 0.0, 0.0);
 	cVector3d pNew = cVector3d(position.x(), position.y(), position.z());
 	cVector3d c = pNew - sphereOffset;
 
