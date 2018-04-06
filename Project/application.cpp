@@ -71,9 +71,10 @@ MyProxyAlgorithm* proxyAlgorithm;
 
 // nine objects with different surface textures that we want to render
 cMultiMesh* scope;
-cMultiMesh *objects[3][3];
-cMesh* mesh;
+cMultiMesh *objects[32];
+cMesh* yes[32];
 cMesh* gummesh;
+cMesh* topgums;
 
 // flag to indicate if the haptic simulation currently running
 bool simulationRunning = false;
@@ -243,7 +244,7 @@ int main(int argc, char* argv[])
     // position and orient the camera
     camera->set( eye					,    // camera position (eye)
                  lookat					,    // look at position (target)
-                 cVector3d (0.0, 0.0, 1.0));   // direction of the (up) vector
+                 cVector3d (0.0, 1.0, 0.0));   // direction of the (up) vector
 
     // set the near and far clipping planes of the camera
     camera->setClippingPlanes(0.01, 10.0);
@@ -300,76 +301,40 @@ int main(int argc, char* argv[])
 
 	
 	const std::string textureFile = "uv_teeth";
+	for (int i = 0; i < 32; i++) {
+		cMultiMesh* object = new cMultiMesh();
 
-	cMultiMesh* object = new cMultiMesh();
-
-	// load geometry from file and compute additional properties
-	//object->loadFromFile("data/simpleteeth.obj");
-	object->loadFromFile("data/teethmagic.obj");
-	object->createAABBCollisionDetector(toolRadius);
-	object->computeBTN();
-
-	//object->setWireMode(true);
-
-	// obtain the first (and only) mesh from the object
-	mesh = object->getMesh(0);
-	// replace the object's material with a custom one
-	mesh->m_material = MyMaterial::create();
-	//mesh->m_material->setWhite();
-	mesh->m_material->setUseHapticShading(true);
-	//MyMaterialPtr m = mesh->m_material;
-	MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(mesh->m_material);
-	object->setStiffness(2000.0, true);
-
+		object->loadFromFile("data/"+cStr(i+1)+".obj");
+		object->createAABBCollisionDetector(toolRadius);
+		object->computeBTN();
+		yes[i] = object->getMesh(0);
+		yes[i]->m_material = MyMaterial::create();
+		yes[i]->m_material->setUseHapticShading(true);
+		MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(yes[0]->m_material);
+		object->setStiffness(2000.0, true);
+		cTexture2dPtr albedoMap = cTexture2d::create();
+		albedoMap->loadFromFile("data/yellow.jpg");
+		albedoMap->setWrapModeS(GL_REPEAT);
+		albedoMap->setWrapModeT(GL_REPEAT);
+		albedoMap->setUseMipmaps(true);
+		cTexture2dPtr normalMap = cTexture2d::create();
+		normalMap->loadFromFile("data/bumppy.png");
+		normalMap->setWrapModeS(GL_REPEAT);
+		normalMap->setWrapModeT(GL_REPEAT);
+		normalMap->setUseMipmaps(true);
+		material->normalMap = normalMap;
+		material->obj = "teeth";
+		yes[i]->m_texture = albedoMap;
+		yes[i]->setUseTexture(true);
+		object->setLocalPos(0.0, 0.0);
+		world->addChild(object);
+	}
 	
-	cTexture2dPtr albedoMap = cTexture2d::create();
-		// create a colour texture map for this mesh object
-
-	albedoMap->loadFromFile("data/yellow.jpg");
-	albedoMap->setWrapModeS(GL_REPEAT);
-	albedoMap->setWrapModeT(GL_REPEAT);
-	albedoMap->setUseMipmaps(true);
-
-	cTexture2dPtr normalMap = cTexture2d::create();
-	normalMap->loadFromFile("data/bumppy.png");
-	normalMap->setWrapModeS(GL_REPEAT);
-	normalMap->setWrapModeT(GL_REPEAT);
-	normalMap->setUseMipmaps(true);
-
-	/*cTexture2dPtr heightMap = cTexture2d::create();
-	heightMap->loadFromFile("images/" + textureFiles[i][j] + "_height.jpg");
-	heightMap->setWrapModeS(GL_REPEAT);
-	heightMap->setWrapModeT(GL_REPEAT);
-	heightMap->setUseMipmaps(true);
-
-	cTexture2dPtr roughMap = cTexture2d::create();
-	roughMap->loadFromFile("images/" + textureFiles[i][j] + "_roughness.jpg");
-	roughMap->setWrapModeS(GL_REPEAT);
-	roughMap->setWrapModeT(GL_REPEAT);
-	roughMap->setUseMipmaps(true);*/
-
-	material->normalMap = normalMap;
-	material->obj = "teeth";
-	//material->heightMap = heightMap;
-	//material->roughnessMap = roughMap;
-
-
-	// assign textures to the mesh
-	
-	mesh->m_texture = albedoMap;
-	mesh->setUseTexture(true);
-			
-	
-	// set the position of this object
-	object->setLocalPos(0.0, 0.0);
-
-	world->addChild(object);
-    
 	cMultiMesh* gums = new cMultiMesh();
 
 	// load geometry from file and compute additional properties
 	//object->loadFromFile("data/simpleteeth.obj");
-	gums->loadFromFile("data/gums.3ds");
+	gums->loadFromFile("data/gumsbottom.obj");
 	gums->createAABBCollisionDetector(toolRadius);
 	gums->computeBTN();
 
@@ -400,35 +365,63 @@ int main(int argc, char* argv[])
 	normalMap2->setWrapModeT(GL_REPEAT);
 	normalMap2->setUseMipmaps(true);
 
-	/*cTexture2dPtr heightMap = cTexture2d::create();
-	heightMap->loadFromFile("images/" + textureFiles[i][j] + "_height.jpg");
-	heightMap->setWrapModeS(GL_REPEAT);
-	heightMap->setWrapModeT(GL_REPEAT);
-	heightMap->setUseMipmaps(true);
-
-	cTexture2dPtr roughMap = cTexture2d::create();
-	roughMap->loadFromFile("images/" + textureFiles[i][j] + "_roughness.jpg");
-	roughMap->setWrapModeS(GL_REPEAT);
-	roughMap->setWrapModeT(GL_REPEAT);
-	roughMap->setUseMipmaps(true);*/
 
 	material2->normalMap = normalMap2;
 	material2->obj = "gums";
 	material2->mesh = gummesh;
-	//material->heightMap = heightMap;
-	//material->roughnessMap = roughMap;
-
-
-	// assign textures to the mesh
 
 	gummesh->m_texture = albedoMap2;
 	gummesh->setUseTexture(true);
-
-
-	// set the position of this object
 	gums->setLocalPos(0.0, 0.0);
 
 	world->addChild(gums);
+
+	cMultiMesh* gums2 = new cMultiMesh();
+
+	// load geometry from file and compute additional properties
+	//object->loadFromFile("data/simpleteeth.obj");
+	gums2->loadFromFile("data/gumstop.obj");
+	gums2->createAABBCollisionDetector(toolRadius);
+	gums2->computeBTN();
+
+	//object->setWireMode(true);
+
+	// obtain the first (and only) mesh from the object
+	topgums = gums2->getMesh(0);
+	// replace the object's material with a custom one
+	topgums->m_material = MyMaterial::create();
+	//gummesh->m_material->setRed();
+	topgums->m_material->setUseHapticShading(true);
+	//MyMaterialPtr m = mesh->m_material;
+	MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(topgums->m_material);
+	topgums->setStiffness(2000.0, true);
+
+
+	cTexture2dPtr albedoMap = cTexture2d::create();
+	// create a colour texture map for this mesh object
+
+	albedoMap->loadFromFile("data/gumcolor.jpg");
+	albedoMap->setWrapModeS(GL_REPEAT);
+	albedoMap->setWrapModeT(GL_REPEAT);
+	albedoMap->setUseMipmaps(true);
+
+	cTexture2dPtr normalMap = cTexture2d::create();
+	normalMap->loadFromFile("data/bumppy.png");
+	normalMap->setWrapModeS(GL_REPEAT);
+	normalMap->setWrapModeT(GL_REPEAT);
+	normalMap->setUseMipmaps(true);
+
+
+	material->normalMap = normalMap2;
+	material->obj = "gums";
+	material->mesh = gummesh;
+
+	topgums->m_texture = albedoMap2;
+	topgums->setUseTexture(true);
+	gums2->setLocalPos(0.0, 0.0);
+
+	world->addChild(gums2);
+	gums2->rotateExtrinsicEulerAnglesDeg(M_PI / 2, 0, 0, C_EULER_ORDER_XYZ);
 
 
     //--------------------------------------------------------------------------
@@ -644,7 +637,7 @@ void updateGraphics(void)
     // update haptic and graphic rate data
     labelRates->setText(cStr(freqCounterGraphics.getFrequency(), 0) + " Hz / " +
         cStr(freqCounterHaptics.getFrequency(), 0) + " Hz " + debugString);
-	timeLabel->setText(cStr(60 - timer->getCurrentTimeSeconds()) + " " + cStr(dynamic_pointer_cast<MyMaterial>(mesh->m_material)->points));
+	timeLabel->setText(cStr(60 - timer->getCurrentTimeSeconds()) + " " + cStr(dynamic_pointer_cast<MyMaterial>(yes[0]->m_material)->points));
 
 
     // update position of label
