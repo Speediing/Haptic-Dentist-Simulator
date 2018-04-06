@@ -313,6 +313,7 @@ int main(int argc, char* argv[])
 
 	// obtain the first (and only) mesh from the object
 	mesh = object->getMesh(0);
+	//mesh->createAABBCollisionDetector(toolRadius);
 	// replace the object's material with a custom one
 	mesh->m_material = MyMaterial::create();
 	//mesh->m_material->setWhite();
@@ -466,14 +467,14 @@ int main(int argc, char* argv[])
 
 	// attach scope to tool
 	tool->m_image = scope;
-	tool->m_image->setLocalPos(cVector3d(tool->getLocalPos().x(), tool->getLocalPos().y() - 1, tool->getLocalPos().z()-.07));
+	tool->m_image->setLocalPos(cVector3d(tool->getLocalPos().x(), tool->getLocalPos().y(), tool->getLocalPos().z()));
 	// load an object file
 	scope->loadFromFile("data/toothbrush.3ds");
 	//tool->setShowContactPoints(false, false);
 	scope->rotateExtrinsicEulerAnglesDeg(M_PI, M_PI, M_PI, C_EULER_ORDER_XYZ);
 	scope->setUseCulling(false);
 	scope->createAABBCollisionDetector(toolRadius);
-	tool->updateToolImagePosition();
+	//tool->updateToolImagePosition();
 
 	// use display list for faster rendering
 	scope->setUseDisplayList(true);
@@ -718,8 +719,8 @@ void updateHaptics(void)
         /////////////////////////////////////////////////////////////////////
         // READ HAPTIC DEVICE
         /////////////////////////////////////////////////////////////////////
-		tool->m_image->setLocalPos(cVector3d(tool->getLocalPos().x(), tool->getLocalPos().y() - 1, tool->getLocalPos().z() - .07));
-		tool->updateToolImagePosition();
+		//tool->m_image->setLocalPos(cVector3d(tool->getLocalPos().x(), tool->getLocalPos().y(), tool->getLocalPos().z()));
+		//tool->updateToolImagePosition();
         // read position 
         cVector3d position;
         hapticDevice->getPosition(position);

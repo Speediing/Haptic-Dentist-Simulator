@@ -94,23 +94,24 @@ void MyProxyAlgorithm::updateForce()
 				//cVector3d n = c0->m_localNormal + normalMapVect;
 				bool newPoints = false;
 				if (color != cColorb(255, 255, 255)) {
-						n = n + normalMapVect*2.0;
+						n = n + normalMapVect;
 						newPoints = true;
 				}
 				//n.normalize();
 				//cout << m_debugVector.x() << endl;
 					
-				n = (cNormalize(m_normalForce) + n * 10.0) / 2.0;
+				n = (m_normalForce * n.length());
 
 
 				//* (1 + heightVect.length())
 				force = m_lastGlobalForce.length() * (n);
 				m_debugInteger = force.length();
-				if (cDot(force, force) > 50) {
+				if (cDot(force, force) > 350) {
+
 					//cout << triIndex << endl;
 					//material->mesh->removeTriangle(triIndex);
 				}
-				if (cDot(force, force) > 25) {
+				if (cDot(force, force) > 175) {
 					unsigned char r = 255;
 					unsigned char g = 255;
 					unsigned char b = 255;
@@ -129,8 +130,8 @@ void MyProxyAlgorithm::updateForce()
 				}
 				if (color != cColorb(255, 255, 255))
 				{
-					material->setDynamicFriction(0.5);
-					material->setStaticFriction(1.5);
+					material->setDynamicFriction(1.5);
+					material->setStaticFriction(2.5);
 				}
 				else {
 					material->setDynamicFriction(0.15);
