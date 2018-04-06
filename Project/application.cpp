@@ -8,6 +8,7 @@
 #include "chai3d.h"
 #include "MyProxyAlgorithm.h"
 #include "MyMaterial.h"
+#include "toothBrushCursor.h"
 //------------------------------------------------------------------------------
 #include <GLFW/glfw3.h>
 //------------------------------------------------------------------------------
@@ -64,7 +65,7 @@ cLabel* timeLabel;
 cPrecisionClock* timer;
 
 // a small sphere (cursor) representing the haptic device 
-cToolCursor* tool;
+toothBrushCursor* tool;
 
 // a pointer to the custom proxy rendering algorithm inside the tool
 MyProxyAlgorithm* proxyAlgorithm;
@@ -313,7 +314,7 @@ int main(int argc, char* argv[])
 		yes[i]->m_material = MyMaterial::create();
 		yes[i]->m_material->setUseHapticShading(true);
 		MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(yes[i]->m_material);
-		object->setStiffness(500.0, true);
+		object->setStiffness(2000.0, true);
 		cTexture2dPtr albedoMap = cTexture2d::create();
 		albedoMap->loadFromFile("data/sandpaper_colour.jpg");
 		albedoMap->setWrapModeS(GL_REPEAT);
@@ -464,7 +465,7 @@ int main(int argc, char* argv[])
     // if the device has a gripper, enable the gripper to simulate a user switch
     hapticDevice->setEnableGripperUserSwitch(true);
 
-    tool = new cToolCursor(world);
+    tool = new toothBrushCursor(world);
     world->addChild(tool);
 
 	//Move to bumps bin
@@ -473,9 +474,12 @@ int main(int argc, char* argv[])
     // [CPSC.86] replace the tool's proxy rendering algorithm with our own
     proxyAlgorithm = new MyProxyAlgorithm;
     delete tool->m_hapticPoint->m_algorithmFingerProxy;
+	delete tool->m_hapticPoint2->m_algorithmFingerProxy;
     tool->m_hapticPoint->m_algorithmFingerProxy = proxyAlgorithm;
+	tool->m_hapticPoint2->m_algorithmFingerProxy = proxyAlgorithm;
 
     tool->m_hapticPoint->m_sphereProxy->m_material->setWhite();
+	tool->m_hapticPoint2->m_sphereProxy->m_material->setWhite();
 
     tool->setRadius(0.01, toolRadius);
 
@@ -496,7 +500,7 @@ int main(int argc, char* argv[])
 
 	// use display list for faster rendering
 	scope->setUseDisplayList(true);
-	scope->setLocalPos(0.0, 0.1, 0.0);
+	scope->setLocalPos(0.0, 0.09, 0.02);
 	tool->start();
     //--------------------------------------------------------------------------
     // WIDGETS
@@ -726,7 +730,6 @@ bool checkMovement(cVector3d position) {
 
 	return ret;
 }
-
 
 void updateHaptics(void)
 {
