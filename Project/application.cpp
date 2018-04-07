@@ -474,12 +474,9 @@ int main(int argc, char* argv[])
     // [CPSC.86] replace the tool's proxy rendering algorithm with our own
     proxyAlgorithm = new MyProxyAlgorithm;
     delete tool->m_hapticPoint->m_algorithmFingerProxy;
-	delete tool->m_hapticPoint2->m_algorithmFingerProxy;
+	
     tool->m_hapticPoint->m_algorithmFingerProxy = proxyAlgorithm;
-	tool->m_hapticPoint2->m_algorithmFingerProxy = proxyAlgorithm;
-
     tool->m_hapticPoint->m_sphereProxy->m_material->setWhite();
-	tool->m_hapticPoint2->m_sphereProxy->m_material->setWhite();
 
     tool->setRadius(0.01, toolRadius);
 
@@ -721,7 +718,7 @@ bool checkMovement(cVector3d position) {
 					lookat					,   // look at position (target)
 					cVector3d(0.0, 0.0, 1.0)	// direction of the (up) vector
 					);   
-
+		
 		ret = true;
 	}
 	else {

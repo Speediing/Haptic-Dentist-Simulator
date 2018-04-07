@@ -1,20 +1,42 @@
 
 #include "toothBrushCursor.h"
-
+#include "iostream"
+using namespace std;
 using namespace chai3d;
 
 toothBrushCursor::toothBrushCursor(cWorld* a_parentWorld):cGenericTool(a_parentWorld)
 {
 	// create a single point contact
 	m_hapticPoint = new cHapticPoint(this);
-	m_hapticPoint2 = new cHapticPoint(this);
-
+	
+	
 	// add point to list
-	m_hapticPoints.push_back(m_hapticPoint);
-	m_hapticPoints.push_back(m_hapticPoint2);
+	//m_hapticPoints.push_back(m_hapticPoint);
+	
 
+	// add the offset for calculating position
+	double xoff = 0.0;
+	for (int i = 0; i < 1; i++) {
+		double yoff = 0.0;
+		for (int j = 0; j < 8; j++) {
+			cHapticPoint * m_hapticPoint2;
+			m_hapticPoint2 = new cHapticPoint(this);
+			delete m_hapticPoint2->m_algorithmFingerProxy;
+			m_hapticPoint2->m_algorithmFingerProxy = proxyAlgorithm;
+			m_hapticPoint2->m_sphereProxy->m_material->setWhite();
+
+			m_hapticPoints.push_back(m_hapticPoint);
+			hapticPointOffset.push_back(cVector3d(xoff, yoff, 0.0));
+			yoff -= 0.005;
+			
+		}
+		xoff -= 0.005;
+	}
+	//hapticPointOffset.push_back(cVector3d(0.0, 0.0, 0.0));
+	//hapticPointOffset.push_back(cVector3d(0.0, -0.005, 0.0));
+	
 	// show proxy spheres only
-	setShowContactPoints(true, false);
+	setShowContactPoints(false, false);
 }
 
 
@@ -57,12 +79,20 @@ void toothBrushCursor::computeInteractionForces()
 	int numContactPoint = (int)(m_hapticPoints.size());
 	cVector3d globalForce = cVector3d(0.0, 0.0, 0.0);
 	for (int i = 0; i < numContactPoint; i++) {
-		globalForce += m_hapticPoint->computeInteractionForces(m_deviceGlobalPos,
+		cVector3d tempForce = m_hapticPoint->computeInteractionForces(m_deviceGlobalPos + hapticPointOffset.at(i),
 			m_deviceGlobalRot,
 			m_deviceGlobalLinVel,
 			m_deviceGlobalAngVel);
+		/*if (tempForce.length() != 0)
+		{
+			globalForce += tempForce;
+			break;
+		}*/
+		//cout << tempForce << endl;
+		globalForce += tempForce;
 		
 	}
+	globalForce = globalForce / ((double) 2.0 * numContactPoint);
 	cVector3d globalTorque(0.0, 0.0, 0.0);
 	// update computed forces to tool
 	setDeviceGlobalForce(globalForce);

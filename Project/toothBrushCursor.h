@@ -2,6 +2,7 @@
 #define TOOTH_BRUSH_CURSOR_H
 
 #include "chai3d.h"
+#include "MyProxyAlgorithm.h"
 using namespace chai3d;
 //#include "tools/CGenericTool.h"
 
@@ -28,7 +29,10 @@ public:
 
 	// Single haptic point representing a cursor.
 	cHapticPoint * m_hapticPoint;
-	cHapticPoint * m_hapticPoint2;
+
+	MyProxyAlgorithm* proxyAlgorithm = new MyProxyAlgorithm;
+
+	std::vector<cVector3d> hapticPointOffset;
 
 
 	//--------------------------------------------------------------------------

@@ -100,11 +100,11 @@ void MyProxyAlgorithm::updateForce()
 				//n.normalize();
 				//cout << m_debugVector.x() << endl;
 					
-				n = (m_normalForce * n.length());
+				//n = (m_normalForce * n.length());
 
 
 				//* (1 + heightVect.length())
-				force = m_lastGlobalForce.length() * (n);
+				force = m_lastGlobalForce + (n);
 				m_debugInteger = force.length();
 				if (cDot(force, force) > 350) {
 
@@ -179,11 +179,11 @@ void MyProxyAlgorithm::updateForce()
 				cVector3d n = computeShadedSurfaceNormal(c0);// + normalMapVect;
 				//n.normalize();
 				//cout << m_debugVector.x() << endl;
-				n = (cNormalize(m_normalForce) + n * 5.0) / 2.0;
+				n = (n * 5.0) / 2.0;
 
 
 				//* (1 + heightVect.length())
-				force = m_lastGlobalForce.length() * (n);
+				force = m_lastGlobalForce + (n);
 				m_debugInteger = force.length();
 			}
 
