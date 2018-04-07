@@ -111,7 +111,79 @@ void MyProxyAlgorithm::updateForce()
 					//cout << triIndex << endl;
 					//material->mesh->removeTriangle(triIndex);
 				}
-				if (cDot(force, force) > 175) {
+				if (cDot(force, force) > 75 & int(color.getG()) < 150) {
+					unsigned char r = 255;
+					unsigned char g = 100;
+					unsigned char b = 0;
+					for (int x = 0; x < 1; x++) {
+						for (int y = 0; y < 1; y++) {
+							cColorb col;
+							col.set(r, g, b);
+							c0->m_object->m_texture->m_image->setPixelColor(a_x + x, a_y + y, col);
+							c0->m_object->m_texture->markForUpdate();
+							if (newPoints) {
+								material->points++;
+								newPoints = false;
+							}
+
+						}
+					}
+				}
+				if (cDot(force, force) > 175 & int(color.getG()) < 175) {
+					unsigned char r = 255;
+					unsigned char g = 150;
+					unsigned char b = 50;
+					for (int x = 0; x < 1; x++) {
+						for (int y = 0; y < 1; y++) {
+							cColorb col;
+							col.set(r, g, b);
+							c0->m_object->m_texture->m_image->setPixelColor(a_x + x, a_y + y, col);
+							c0->m_object->m_texture->markForUpdate();
+							if (newPoints) {
+								material->points++;
+								newPoints = false;
+							}
+
+						}
+					}
+				}
+				if (cDot(force, force) > 250 & int(color.getG()) < 200) {
+					unsigned char r = 255;
+					unsigned char g = 175;
+					unsigned char b = 100;
+					for (int x = 0; x < 1; x++) {
+						for (int y = 0; y < 1; y++) {
+							cColorb col;
+							col.set(r, g, b);
+							c0->m_object->m_texture->m_image->setPixelColor(a_x + x, a_y + y, col);
+							c0->m_object->m_texture->markForUpdate();
+							if (newPoints) {
+								material->points++;
+								newPoints = false;
+							}
+
+						}
+					}
+				}
+				if (cDot(force, force) > 500 & int(color.getG()) < 255) {
+					unsigned char r = 255;
+					unsigned char g = 200;
+					unsigned char b = 170;
+					for (int x = 0; x < 1; x++) {
+						for (int y = 0; y < 1; y++) {
+							cColorb col;
+							col.set(r, g, b);
+							c0->m_object->m_texture->m_image->setPixelColor(a_x + x, a_y + y, col);
+							c0->m_object->m_texture->markForUpdate();
+							if (newPoints) {
+								material->points++;
+								newPoints = false;
+							}
+
+						}
+					}
+				}
+				if (cDot(force, force) > 750) {
 					unsigned char r = 255;
 					unsigned char g = 255;
 					unsigned char b = 255;
@@ -123,11 +195,13 @@ void MyProxyAlgorithm::updateForce()
 							c0->m_object->m_texture->markForUpdate();
 							if (newPoints) {
 								material->points++;
+								newPoints = false;
 							}
-							
+
 						}
 					}
 				}
+
 				if (color != cColorb(255, 255, 255))
 				{
 					material->setDynamicFriction(1.5);
@@ -184,6 +258,7 @@ void MyProxyAlgorithm::updateForce()
 
 				//* (1 + heightVect.length())
 				force = m_lastGlobalForce + (n);
+
 				m_debugInteger = force.length();
 			}
 

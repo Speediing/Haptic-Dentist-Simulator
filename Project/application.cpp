@@ -66,7 +66,8 @@ cPrecisionClock* timer;
 
 // a small sphere (cursor) representing the haptic device 
 toothBrushCursor* tool;
-
+double degrees;
+double degrees2;
 // a pointer to the custom proxy rendering algorithm inside the tool
 MyProxyAlgorithm* proxyAlgorithm;
 
@@ -83,6 +84,7 @@ bool simulationRunning = false;
 
 // flag to indicate if the haptic simulation has terminated
 bool simulationFinished = false;
+cFontPtr plzWork;
 
 // a frequency counter to measure the simulation graphic rate
 cFrequencyCounter freqCounterGraphics;
@@ -235,7 +237,6 @@ int main(int argc, char* argv[])
 
     // create a new world.
     world = new cWorld();
-
     // set the background color of the environment
 	world->m_backgroundColor.setBlueDarkTurquoise();
 
@@ -286,7 +287,7 @@ int main(int argc, char* argv[])
     light->setCutOffAngleDeg(180);
 
     // use a point avatar for this scene
-    double toolRadius = 0.01;
+    double toolRadius = 0.001;
     //--------------------------------------------------------------------------
     // [CPSC.86] TEXTURED OBJECTS
     //--------------------------------------------------------------------------
@@ -467,7 +468,7 @@ int main(int argc, char* argv[])
 
     tool = new toothBrushCursor(world);
     world->addChild(tool);
-
+	
 	//Move to bumps bin
 	//tool->setLocalPos(0.0, -objectSpacing, 0.0);
 
@@ -478,7 +479,7 @@ int main(int argc, char* argv[])
     tool->m_hapticPoint->m_algorithmFingerProxy = proxyAlgorithm;
     tool->m_hapticPoint->m_sphereProxy->m_material->setWhite();
 
-    tool->setRadius(0.01, toolRadius);
+    tool->setRadius(0.001, toolRadius);
 
     tool->setHapticDevice(hapticDevice);
 
@@ -505,9 +506,12 @@ int main(int argc, char* argv[])
 
     // create a font
     cFontPtr font = NEW_CFONTCALIBRI20();
-    
+	cFontPtr maybe = cFont::create();
+	if (maybe->loadFromFile("data/Blonde.ttf") == false) {
+		cout << "yeah no good" << endl;
+	}
     // create a label to display the haptic and graphic rates of the simulation
-    labelRates = new cLabel(font);
+    labelRates = new cLabel(maybe);
     labelRates->m_fontColor.setWhite();
     camera->m_frontLayer->addChild(labelRates);
 	timeLabel = new cLabel(font);
@@ -665,7 +669,12 @@ void updateGraphics(void)
     // update haptic and graphic rate data
     labelRates->setText(cStr(freqCounterGraphics.getFrequency(), 0) + " Hz / " +
         cStr(freqCounterHaptics.getFrequency(), 0) + " Hz " + debugString);
-	int point = dynamic_pointer_cast<MyMaterial>(yes[0]->m_material)->points - dynamic_pointer_cast<MyMaterial>(gummesh->m_material)->points;
+	int totalPoints = 0;
+	for (int i = 0; i < 35; i++) {
+		totalPoints += dynamic_pointer_cast<MyMaterial>(yes[i]->m_material)->points;
+	}
+	int Gumpoints = 4 * (dynamic_pointer_cast<MyMaterial>(gummesh->m_material)->points + dynamic_pointer_cast<MyMaterial>(topgums->m_material)->points);
+	int point = totalPoints - Gumpoints;
 	timeLabel->setText(cStr(60 - timer->getCurrentTimeSeconds()) + " " + cStr(point));
 
 
@@ -752,8 +761,28 @@ void updateHaptics(void)
         // read user-switch status (button 0)
         bool button = false;
         hapticDevice->getUserSwitch(0, button);
-
-
+		if (button == true) {
+			degrees += .0001;
+			tool->rotateAboutGlobalAxisDeg(cVector3d(0, 1, 0), 0.1);
+		}
+		bool button2 = false;
+		hapticDevice->getUserSwitch(1, button2);
+		if (button2 == true) {
+			degrees2 += .0001;
+			tool->rotateAboutGlobalAxisDeg(cVector3d(0, 0, 1), 0.1);
+		}
+		bool button3 = false;
+		hapticDevice->getUserSwitch(2, button3);
+		if (button3 == true) {
+			degrees -= .0001;
+			tool->rotateAboutGlobalAxisDeg(cVector3d(0, 1, 0), -0.1);
+		}
+		bool button4 = false;
+		hapticDevice->getUserSwitch(3, button4);
+		if (button4 == true) {
+			degrees2 -= .0001;
+			tool->rotateAboutGlobalAxisDeg(cVector3d(0, 0, 1), -.1);
+		}
         world->computeGlobalPositions();
 
 
