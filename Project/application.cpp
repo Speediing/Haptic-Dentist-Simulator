@@ -505,13 +505,13 @@ int main(int argc, char* argv[])
     //--------------------------------------------------------------------------
 
     // create a font
-    cFontPtr font = NEW_CFONTCALIBRI20();
+    cFontPtr font = NEW_CFONTCALIBRI144();
 	cFontPtr maybe = cFont::create();
 	if (maybe->loadFromFile("data/Blonde.ttf") == false) {
 		cout << "yeah no good" << endl;
 	}
     // create a label to display the haptic and graphic rates of the simulation
-    labelRates = new cLabel(maybe);
+    labelRates = new cLabel(font);
     labelRates->m_fontColor.setWhite();
     camera->m_frontLayer->addChild(labelRates);
 	timeLabel = new cLabel(font);
@@ -667,8 +667,6 @@ void updateGraphics(void)
 	std::string debugString = cStr(proxyAlgorithm->m_debugInteger) + " " + proxyAlgorithm->m_debugVector.str();
 
     // update haptic and graphic rate data
-    labelRates->setText(cStr(freqCounterGraphics.getFrequency(), 0) + " Hz / " +
-        cStr(freqCounterHaptics.getFrequency(), 0) + " Hz " + debugString);
 	int totalPoints = 0;
 	for (int i = 0; i < 35; i++) {
 		totalPoints += dynamic_pointer_cast<MyMaterial>(yes[i]->m_material)->points;
@@ -680,7 +678,7 @@ void updateGraphics(void)
 
     // update position of label
     labelRates->setLocalPos((int)(0.5 * (width - labelRates->getWidth())), 15);
-	timeLabel->setLocalPos((int)(0.5 * (width - timeLabel->getWidth())), 50);
+	timeLabel->setLocalPos((int)(0.5 * (width - timeLabel->getWidth())), 900);
     /////////////////////////////////////////////////////////////////////
     // RENDER SCENE
     /////////////////////////////////////////////////////////////////////
