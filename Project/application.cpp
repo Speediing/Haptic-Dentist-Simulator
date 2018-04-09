@@ -47,7 +47,7 @@ cWorld* world;
 
 // a camera to render the world in the window display
 cCamera* camera;
-cVector3d eye = cVector3d(0.5, 0.0, 0.0);
+cVector3d eye = cVector3d(1.0, 0.0, 0.5);
 cVector3d lookat = cVector3d(0.0, 0.0, 0.0);
 
 // a light source to illuminate the objects in the world
@@ -488,18 +488,24 @@ int main(int argc, char* argv[])
 
 	// attach scope to tool
 	tool->m_image->addChild(scope);
+	tool->setLocalPos(0.5, 0.0, 0.25);
 	// load an object file
 	scope->loadFromFile("data/toothbrush.3ds");
 	//tool->setShowContactPoints(false, false);
 	scope->rotateExtrinsicEulerAnglesDeg(M_PI, M_PI, M_PI, C_EULER_ORDER_XYZ);
 	scope->setUseCulling(false);
 	scope->createAABBCollisionDetector(toolRadius);
-	//tool->updateToolImagePosition();
+	tool->updateToolImagePosition();
 
 	// use display list for faster rendering
 	scope->setUseDisplayList(true);
 	scope->setLocalPos(0.0, 0.09, 0.02);
 	tool->start();
+
+	camera->set(eye,   // camera position (eye)
+		lookat,   // look at position (target)
+		cVector3d(0.0, 0.0, 1.0)	// direction of the (up) vector
+	);
     //--------------------------------------------------------------------------
     // WIDGETS
     //--------------------------------------------------------------------------
