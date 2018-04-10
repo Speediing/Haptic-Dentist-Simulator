@@ -44,10 +44,10 @@ cShapeSphere * sphere0;
 
 // a world that contains all objects of the virtual environment
 cWorld* world;
-
+//cShapeBox* menu;
 // a camera to render the world in the window display
 cCamera* camera;
-cVector3d eye = cVector3d(0.5, 0.0, 0.0);
+cVector3d eye = cVector3d(1.0, 0.0, 0.5);
 cVector3d lookat = cVector3d(0.0, 0.0, 0.0);
 
 // a light source to illuminate the objects in the world
@@ -78,7 +78,9 @@ cMesh* yes[32];
 cMesh* gummesh;
 cMesh* topgums;
 cMesh* bottomgums;
-
+cMultiMesh* gums;
+bool start = true;
+int highscore = 0;
 // flag to indicate if the haptic simulation currently running
 bool simulationRunning = false;
 
@@ -315,7 +317,7 @@ int main(int argc, char* argv[])
 		yes[i]->m_material = MyMaterial::create();
 		yes[i]->m_material->setUseHapticShading(true);
 		MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(yes[i]->m_material);
-		object->setStiffness(2000.0, true);
+		object->setStiffness(1000.0, true);
 		cTexture2dPtr albedoMap = cTexture2d::create();
 		albedoMap->loadFromFile("data/sandpaper_colour.jpg");
 		albedoMap->setWrapModeS(GL_REPEAT);
@@ -333,8 +335,8 @@ int main(int argc, char* argv[])
 		object->setLocalPos(0.0, 0.0);
 		world->addChild(object);
 	}
-	
-	cMultiMesh* gums = new cMultiMesh();
+	//menu = new cShapeBox();
+	gums = new cMultiMesh();
 
 	// load geometry from file and compute additional properties
 	//object->loadFromFile("data/simpleteeth.obj");
@@ -403,7 +405,7 @@ int main(int argc, char* argv[])
 
 	cTexture2dPtr albedoMap = cTexture2d::create();
 	// create a colour texture map for this mesh object
-
+	double highscore = 0;
 	albedoMap->loadFromFile("data/gumcolor.jpg");
 	albedoMap->setWrapModeS(GL_REPEAT);
 	albedoMap->setWrapModeT(GL_REPEAT);
@@ -488,18 +490,24 @@ int main(int argc, char* argv[])
 
 	// attach scope to tool
 	tool->m_image->addChild(scope);
+	tool->setLocalPos(0.5, 0.0, 0.25);
 	// load an object file
 	scope->loadFromFile("data/toothbrush.3ds");
 	//tool->setShowContactPoints(false, false);
 	scope->rotateExtrinsicEulerAnglesDeg(M_PI, M_PI, M_PI, C_EULER_ORDER_XYZ);
 	scope->setUseCulling(false);
 	scope->createAABBCollisionDetector(toolRadius);
-	//tool->updateToolImagePosition();
+	tool->updateToolImagePosition();
 
 	// use display list for faster rendering
 	scope->setUseDisplayList(true);
 	scope->setLocalPos(0.0, 0.09, 0.02);
 	tool->start();
+
+	camera->set(eye,   // camera position (eye)
+		lookat,   // look at position (target)
+		cVector3d(0.0, 0.0, 1.0)	// direction of the (up) vector
+	);
     //--------------------------------------------------------------------------
     // WIDGETS
     //--------------------------------------------------------------------------
@@ -584,7 +592,144 @@ void errorCallback(int a_error, const char* a_description)
 }
 
 //------------------------------------------------------------------------------
+void reset(void) {
+	int totalPoints = 0;
+	for (int i = 0; i < 35; i++) {
+		totalPoints += dynamic_pointer_cast<MyMaterial>(yes[i]->m_material)->points;
+		dynamic_pointer_cast<MyMaterial>(yes[i]->m_material)->points = 0;
+	}
+	int Gumpoints = 4 * (dynamic_pointer_cast<MyMaterial>(gummesh->m_material)->points + dynamic_pointer_cast<MyMaterial>(topgums->m_material)->points);
+	dynamic_pointer_cast<MyMaterial>(gummesh->m_material)->points = 0;
+	dynamic_pointer_cast<MyMaterial>(topgums->m_material)->points = 0;
+	int point = totalPoints - Gumpoints;
+	if (point > highscore) {
+		highscore = point;
+	}
+	for (int i = 0; i < 35; i++) {
+		world->removeChild(yes[i]);
+		yes[i] = NULL;
+		cMultiMesh* object = new cMultiMesh();
 
+		object->loadFromFile("data/" + cStr(i + 1) + ".obj");
+		object->createAABBCollisionDetector(0.01);
+		object->computeBTN();
+		yes[i] = object->getMesh(0);
+		yes[i]->m_material = MyMaterial::create();
+		yes[i]->m_material->setUseHapticShading(true);
+		MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(yes[i]->m_material);
+		object->setStiffness(1000.0, true);
+		cTexture2dPtr albedoMap = cTexture2d::create();
+		albedoMap->loadFromFile("data/sandpaper_colour.jpg");
+		albedoMap->setWrapModeS(GL_REPEAT);
+		albedoMap->setWrapModeT(GL_REPEAT);
+		albedoMap->setUseMipmaps(true);
+		cTexture2dPtr normalMap = cTexture2d::create();
+		normalMap->loadFromFile("data/SandPaperNormalMap.png");
+		normalMap->setWrapModeS(GL_REPEAT);
+		normalMap->setWrapModeT(GL_REPEAT);
+		normalMap->setUseMipmaps(true);
+		material->normalMap = normalMap;
+		material->obj = "teeth";
+		yes[i]->m_texture = albedoMap;
+		yes[i]->setUseTexture(true);
+		object->setLocalPos(0.0, 0.0);
+		world->addChild(object);
+	}
+	world->removeChild(topgums);
+	cMultiMesh* gums2 = new cMultiMesh();
+
+	// load geometry from file and compute additional properties
+	//object->loadFromFile("data/simpleteeth.obj");
+	gums2->loadFromFile("data/gumstop.obj");
+	gums2->createAABBCollisionDetector(0.01);
+	gums2->computeBTN();
+
+	//object->setWireMode(true);
+
+	// obtain the first (and only) mesh from the object
+	topgums = gums2->getMesh(0);
+	// replace the object's material with a custom one
+	topgums->m_material = MyMaterial::create();
+	//gummesh->m_material->setRed();
+	topgums->m_material->setUseHapticShading(true);
+	//MyMaterialPtr m = mesh->m_material;
+	MyMaterialPtr material = dynamic_pointer_cast<MyMaterial>(topgums->m_material);
+	topgums->setStiffness(2000.0, true);
+
+
+	cTexture2dPtr albedoMap = cTexture2d::create();
+	// create a colour texture map for this mesh object
+	albedoMap->loadFromFile("data/gumcolor.jpg");
+	albedoMap->setWrapModeS(GL_REPEAT);
+	albedoMap->setWrapModeT(GL_REPEAT);
+	albedoMap->setUseMipmaps(true);
+
+	cTexture2dPtr normalMap = cTexture2d::create();
+	normalMap->loadFromFile("data/bumppy.png");
+	normalMap->setWrapModeS(GL_REPEAT);
+	normalMap->setWrapModeT(GL_REPEAT);
+	normalMap->setUseMipmaps(true);
+
+
+	material->normalMap = normalMap;
+	material->obj = "gums";
+	material->mesh = gummesh;
+
+	topgums->m_texture = albedoMap;
+	topgums->setUseTexture(true);
+	gums2->setLocalPos(0.0, 0.0);
+
+	world->addChild(gums2);
+	//world->removeChild(gummesh);
+	//gummesh = NULL;
+	//cMultiMesh* gums = new cMultiMesh();
+
+	//// load geometry from file and compute additional properties
+	////object->loadFromFile("data/simpleteeth.obj");
+	//gums->loadFromFile("data/gumsbottom.obj");
+	//gums->createAABBCollisionDetector(0.01);
+	//gums->computeBTN();
+
+	//object->setWireMode(true);
+
+	// obtain the first (and only) mesh from the object
+	gummesh = gums->getMesh(0);
+	// replace the object's material with a custom one
+	gummesh->m_material = MyMaterial::create();
+	//gummesh->m_material->setRed();
+	gummesh->m_material->setUseHapticShading(true);
+	//MyMaterialPtr m = mesh->m_material;
+	MyMaterialPtr material2 = dynamic_pointer_cast<MyMaterial>(gummesh->m_material);
+	gummesh->setStiffness(2000.0, true);
+
+
+	cTexture2dPtr albedoMap2 = cTexture2d::create();
+	// create a colour texture map for this mesh object
+
+	albedoMap2->loadFromFile("data/gumcolor.jpg");
+	albedoMap2->setWrapModeS(GL_REPEAT);
+	albedoMap2->setWrapModeT(GL_REPEAT);
+	albedoMap2->setUseMipmaps(true);
+
+	cTexture2dPtr normalMap2 = cTexture2d::create();
+	normalMap2->loadFromFile("data/bumppy.png");
+	normalMap2->setWrapModeS(GL_REPEAT);
+	normalMap2->setWrapModeT(GL_REPEAT);
+	normalMap2->setUseMipmaps(true);
+
+
+	material2->normalMap = normalMap2;
+	material2->obj = "gums";
+	material2->mesh = gummesh;
+
+	gummesh->m_texture = albedoMap2;
+	gummesh->setUseTexture(true);
+	gums->setLocalPos(0.0, 0.0);
+
+	world->addChild(gums);
+	timer->reset();
+	timer->start();
+}
 void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, int a_mods)
 {
     // filter calls that only include a key press
@@ -634,6 +779,10 @@ void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, 
         mirroredDisplay = !mirroredDisplay;
         camera->setMirrorVertical(mirroredDisplay);
     }
+	else if (a_key == GLFW_KEY_R)
+	{
+		reset();
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -656,7 +805,6 @@ void close(void)
 }
 
 //------------------------------------------------------------------------------
-
 void updateGraphics(void)
 {
     /////////////////////////////////////////////////////////////////////
@@ -673,7 +821,11 @@ void updateGraphics(void)
 	}
 	int Gumpoints = 4 * (dynamic_pointer_cast<MyMaterial>(gummesh->m_material)->points + dynamic_pointer_cast<MyMaterial>(topgums->m_material)->points);
 	int point = totalPoints - Gumpoints;
-	timeLabel->setText(cStr(60 - timer->getCurrentTimeSeconds()) + " " + cStr(point));
+	if (60 - timer->getCurrentTimeSeconds() 
+		< 0) {
+		reset();
+	}
+	timeLabel->setText(cStr(60 - timer->getCurrentTimeSeconds()) + " Score: " + cStr(point) + " High-Score: " + cStr(highscore));
 
 
     // update position of label
@@ -743,6 +895,8 @@ void updateHaptics(void)
     // main haptic simulation loop
     while(simulationRunning)
     {
+		bool button = false;
+		hapticDevice->getUserSwitch(0, button);
         /////////////////////////////////////////////////////////////////////
         // READ HAPTIC DEVICE
         /////////////////////////////////////////////////////////////////////
@@ -753,34 +907,8 @@ void updateHaptics(void)
         hapticDevice->getPosition(position);
 
         // read orientation 
-        cMatrix3d rotation;
-        hapticDevice->getRotation(rotation);
 
         // read user-switch status (button 0)
-        bool button = false;
-        hapticDevice->getUserSwitch(0, button);
-		if (button == true) {
-			degrees += .0001;
-			tool->rotateAboutGlobalAxisDeg(cVector3d(0, 1, 0), 0.1);
-		}
-		bool button2 = false;
-		hapticDevice->getUserSwitch(1, button2);
-		if (button2 == true) {
-			degrees2 += .0001;
-			tool->rotateAboutGlobalAxisDeg(cVector3d(0, 0, 1), 0.1);
-		}
-		bool button3 = false;
-		hapticDevice->getUserSwitch(2, button3);
-		if (button3 == true) {
-			degrees -= .0001;
-			tool->rotateAboutGlobalAxisDeg(cVector3d(0, 1, 0), -0.1);
-		}
-		bool button4 = false;
-		hapticDevice->getUserSwitch(3, button4);
-		if (button4 == true) {
-			degrees2 -= .0001;
-			tool->rotateAboutGlobalAxisDeg(cVector3d(0, 0, 1), -.1);
-		}
         world->computeGlobalPositions();
 
 
@@ -790,7 +918,28 @@ void updateHaptics(void)
 
         tool->updateFromDevice();
 
-
+		if (button == true) {
+			degrees += .1;
+			//tool->rotateAboutLocalAxisDeg(cVector3d(0, 1, 0), 0.1);
+		}
+		bool button2 = false;
+		hapticDevice->getUserSwitch(1, button2);
+		if (button2 == true) {
+			degrees2 += .1;
+			//tool->rotateAboutLocalAxisDeg(cVector3d(0, 0, 1), 0.1);
+		}
+		bool button3 = false;
+		hapticDevice->getUserSwitch(2, button3);
+		if (button3 == true) {
+			degrees -= .1;
+			//tool->rotateAboutLocalAxisDeg(cVector3d(0, 1, 0), -0.1);
+		}
+		bool button4 = false;
+		hapticDevice->getUserSwitch(3, button4);
+		if (button4 == true) {
+			degrees2 -= .1;
+			//tool->rotateAboutLocalAxisDeg(cVector3d(0, 0, 1), -.1);
+		}
         /////////////////////////////////////////////////////////////////////
         // COMPUTE FORCES
         /////////////////////////////////////////////////////////////////////

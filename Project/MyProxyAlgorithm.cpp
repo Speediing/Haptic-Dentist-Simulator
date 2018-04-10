@@ -183,7 +183,7 @@ void MyProxyAlgorithm::updateForce()
 						}
 					}
 				}
-				if (cDot(force, force) > 750) {
+				if (cDot(force, force) > 600) {
 					unsigned char r = 255;
 					unsigned char g = 255;
 					unsigned char b = 255;

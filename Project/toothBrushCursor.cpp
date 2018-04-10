@@ -30,7 +30,7 @@ toothBrushCursor::toothBrushCursor(cWorld* a_parentWorld):cGenericTool(a_parentW
 			yoff -= 0.005;
 			
 		}
-		xoff -= 0.005;
+		//xoff -= 0.005;
 	}
 	//hapticPointOffset.push_back(cVector3d(0.0, 0.0, 0.0));
 	//hapticPointOffset.push_back(cVector3d(0.0, -0.005, 0.0));
