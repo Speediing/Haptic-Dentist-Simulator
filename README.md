@@ -1,6 +1,6 @@
 # Introduction
 
-The purpose of this project is to simulate brushing teeth. This is done as a way to train hygien- ists with different dental tools without the unnecessary pain a patient would go through when under the brush of a new hygienist. Currently only one tool exists, the basic toothbrush. The project uses Chai3d, a C++ library for haptic rendering and the Novint Falcon. This simulation occurs in a 3D world where forces are applied when the hygienist moves the toothbrush onto the teeth or gums.
+The purpose of this project is to simulate brushing teeth. This is done as a way to train hygienists with different dental tools without the unnecessary pain a patient would go through when under the brush of a new hygienist. Currently only one tool exists, the basic toothbrush. The project uses Chai3d, a C++ library for haptic rendering and the Novint Falcon. This simulation occurs in a 3D world where forces are applied when the hygienist moves the toothbrush onto the teeth or gums.
 
 ![alt-text](https://s3-us-west-1.amazonaws.com/www.jasonwiker.ca/assets/img/haptics2.png)
 
